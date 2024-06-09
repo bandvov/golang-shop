@@ -43,12 +43,15 @@ func main() {
 
 	// Initialize repositories
 	userRepo := &infrastructure.PostgresUserRepository{DB: db}
+	productRepo := &infrastructure.PostgresProductRepository{DB: db}
 
 	// Initialize services
 	userService := &application.UserService{Repo: userRepo}
+	productService := &application.ProductService{Repo: productRepo}
 
 	// Initialize handlers
 	userHandler := &interfaces.UserHandler{UserService: userService}
+	productHandler := &interfaces.ProductHandler{ProductService: productService}
 
 	// Create a new ServeMux for the entire application
 	mux := http.NewServeMux()
@@ -56,6 +59,11 @@ func main() {
 	mux.Handle("PUT /users", interfaces.LoggerMiddleware(userHandler.UpdateUser))
 	mux.Handle("GET /users/{id}", interfaces.LoggerMiddleware(userHandler.GetUserByID))
 	mux.Handle("DELETE /users/{id}", interfaces.LoggerMiddleware(userHandler.DeleteUser))
+
+	mux.Handle("GET /products", interfaces.LoggerMiddleware(productHandler.GetProducts))
+	mux.Handle("PUT /products", interfaces.LoggerMiddleware(productHandler.UpdateProduct))
+	mux.Handle("GET /products/{id}", interfaces.LoggerMiddleware(productHandler.GetProduct))
+	mux.Handle("DELETE /products/{id}", interfaces.LoggerMiddleware(productHandler.DeleteProduct))
 
 	log.Printf("Starting server on %v\n", PORT)
 	http.ListenAndServe(fmt.Sprintf(":%v", PORT), mux)
