@@ -26,7 +26,7 @@ func main() {
 	dbPort := os.Getenv("POSTGRES_DATABASE_PORT")
 	dbUserPassword := os.Getenv("POSTGRES_DATABASE_USER_PASSWORD")
 
-	connStr := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v  sslmode=verify-full sslrootcert=%v", dbHost, dbPort, dbUser, dbUserPassword, dbName,"")
+	connStr := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v  sslmode=verify-full sslrootcert=%v", dbHost, dbPort, dbUser, dbUserPassword, dbName, "")
 
 	// Connect to PostgreSQL
 	db, err := sql.Open("postgres", connStr)
@@ -52,7 +52,10 @@ func main() {
 
 	// Create a new ServeMux for the entire application
 	mux := http.NewServeMux()
-	mux.HandleFunc("/users", interfaces.LoggerMiddleware(userHandler).ServeHTTP)
+	mux.Handle("GET /users", interfaces.LoggerMiddleware(userHandler.GetUsers))
+	mux.Handle("PUT /users", interfaces.LoggerMiddleware(userHandler.UpdateUser))
+	mux.Handle("GET /users/{id}", interfaces.LoggerMiddleware(userHandler.GetUserByID))
+	mux.Handle("DELETE /users/{id}", interfaces.LoggerMiddleware(userHandler.DeleteUser))
 
 	log.Printf("Starting server on %v\n", PORT)
 	http.ListenAndServe(fmt.Sprintf(":%v", PORT), mux)

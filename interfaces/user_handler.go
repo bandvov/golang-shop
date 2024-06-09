@@ -10,30 +10,20 @@ import (
 )
 
 type UserHandler struct {
-    UserService *application.UserService
+	UserService *application.UserService
 }
-func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    switch r.Method {
-    case http.MethodGet:
-        h.GetUsers(w, r)
-    case http.MethodPost:
-        h.CreateUser(w, r)
-    case http.MethodPut:
-        h.UpdateUser(w, r)
-    case http.MethodDelete:
-        h.DeleteUser(w, r)
-    default:
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-    }
+
+func NewUserHandler(service *application.UserService) *UserHandler {
+	return &UserHandler{UserService: service}
 }
 
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
-    users, err := h.UserService.GetUsers()
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    json.NewEncoder(w).Encode(users)
+	users, err := h.UserService.GetUsers()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(users)
 }
 
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {

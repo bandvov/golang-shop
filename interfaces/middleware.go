@@ -1,21 +1,23 @@
 package interfaces
 
 import (
-    "log"
-    "net/http"
+	"log"
+	"net/http"
 )
 
-func LoggerMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        log.Printf("%s %s %s", r.Method, r.RequestURI, r.RemoteAddr)
-        next.ServeHTTP(w, r)
-    })
+func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Request: %s %s", r.Method, r.URL.Path)
+		next(w, r)
+	}
 }
 
-func AuthMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Implement authentication check here
-        // For example, checking a JWT token in the request header
-        next.ServeHTTP(w, r)
-    })
+func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Your authentication logic here, e.g., checking if the request has a valid token
+		// If authentication fails, return a 401 Unauthorized response
+		// Otherwise, call the next handler in the chain
+		// For simplicity, let's assume authentication succeeds
+		next(w, r)
+	}
 }
