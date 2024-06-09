@@ -10,7 +10,7 @@ func NewUserService(repo users.UserRepository) *UserService {
 	return &UserService{Repo: repo}
 }
 
-func (s *UserService) GetUserS() ([]*users.User, error) {
+func (s *UserService) GetUsers() ([]*users.User, error) {
 	return s.Repo.GetUsers()
 }
 func (s *UserService) GetUserByID(id int) (*users.User, error) {

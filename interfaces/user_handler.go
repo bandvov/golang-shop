@@ -28,7 +28,7 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
-    users, err := h.UserService.GetUserS()
+    users, err := h.UserService.GetUsers()
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
