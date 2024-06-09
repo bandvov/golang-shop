@@ -45,7 +45,7 @@ func main() {
 	userRepo := &infrastructure.PostgresUserRepository{DB: db}
 
 	// Initialize services
-	userService := &application.UserService{UserRepo: userRepo}
+	userService := &application.UserService{Repo: userRepo}
 
 	// Initialize handlers
 	userHandler := &interfaces.UserHandler{UserService: userService}

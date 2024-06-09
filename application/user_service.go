@@ -1,29 +1,30 @@
-// application/user_service.go
 package application
 
-import "github.com/bandvov/golang-shop/domain"
-
+import "github.com/bandvov/golang-shop/domain/users"
 
 type UserService struct {
-    UserRepo domain.UserRepository
+	Repo users.UserRepository
 }
 
-func (s *UserService) GetUsers() ([]*domain.User, error) {
-    return s.UserRepo.FindAll()
+func NewUserService(repo users.UserRepository) *UserService {
+	return &UserService{Repo: repo}
 }
 
-func (s *UserService) GetUserByID(id int) (*domain.User, error) {
-    return s.UserRepo.FindByID(id)
+func (s *UserService) GetUserS() ([]*users.User, error) {
+	return s.Repo.GetUsers()
+}
+func (s *UserService) GetUserByID(id int) (*users.User, error) {
+	return s.Repo.GetByID(id)
 }
 
-func (s *UserService) CreateUser(user *domain.User) error {
-    return s.UserRepo.Save(user)
-}
-
-func (s *UserService) UpdateUser(user *domain.User) error {
-    return s.UserRepo.Update(user)
+func (s *UserService) CreateUser(user *users.User) error {
+	return s.Repo.Save(user)
 }
 
 func (s *UserService) DeleteUser(id int) error {
-    return s.UserRepo.Delete(id)
+	return s.Repo.Delete(id)
+}
+
+func (s *UserService) UpdateUser(user *users.User) error {
+	return s.Repo.Update(user)
 }

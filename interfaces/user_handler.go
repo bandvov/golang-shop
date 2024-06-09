@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/bandvov/golang-shop/application"
-	"github.com/bandvov/golang-shop/domain"
+	"github.com/bandvov/golang-shop/domain/users"
 )
 
 type UserHandler struct {
@@ -28,7 +28,7 @@ func (h *UserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
-    users, err := h.UserService.GetUsers()
+    users, err := h.UserService.GetUserS()
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
@@ -52,7 +52,7 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-    var user domain.User
+    var user users.User
     if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
         http.Error(w, "Failed to decode request body", http.StatusBadRequest)
         return
@@ -66,7 +66,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-    var user domain.User
+    var user users.User
     if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
         http.Error(w, "Failed to decode request body", http.StatusBadRequest)
         return

@@ -1,65 +1,73 @@
-// infrastructure/postgres_user_repository.go
 package infrastructure
 
 import (
 	"database/sql"
-	"log"
 
-	"github.com/bandvov/golang-shop/domain"
+	"github.com/bandvov/golang-shop/domain/users"
+	_ "github.com/lib/pq"
 )
 
 type PostgresUserRepository struct {
 	DB *sql.DB
 }
 
-func (r *PostgresUserRepository) FindAll() ([]*domain.User, error) {
-	rows, err := r.DB.Query("SELECT id, username, email FROM users")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	var users []*domain.User
-	for rows.Next() {
-		var user domain.User
-		err := rows.Scan(&user.ID, &user.Username, &user.Email)
-		if err != nil {
-			log.Fatal(err)
-		}
-		users = append(users, &user)
-	}
-	return users, nil
+func NewPostgresUserRepository(db *sql.DB) *PostgresUserRepository {
+	return &PostgresUserRepository{DB: db}
 }
 
-func (r *PostgresUserRepository) FindByID(id int) (*domain.User, error) {
-	var user domain.User
-	err := r.DB.QueryRow("SELECT id, username, email FROM users WHERE id = $1", id).Scan(&user.ID, &user.Username, &user.Email)
+func (r *PostgresUserRepository) GetUsers() ([]*users.User, error) {
+	var u []*users.User
+	query := "SELECT id, name, email, password FROM users"
+
+	rows, err := r.DB.Query(query)
 	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var user *users.User
+		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
+			return nil, err
+		}
+		u = append(u, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return u, nil
+
+}
+
+func (r *PostgresUserRepository) GetByID(id int) (*users.User, error) {
+	var user users.User
+	query := "SELECT id, name, email, password FROM users WHERE id=$1"
+	err := r.DB.QueryRow(query, id).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, users.ErrUserNotFound
+		}
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (r *PostgresUserRepository) Save(user *domain.User) error {
-	_, err := r.DB.Exec("INSERT INTO users (username, email) VALUES ($1, $2)", user.Username, user.Email)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *PostgresUserRepository) Update(user *domain.User) error {
-	_, err := r.DB.Exec("UPDATE users SET username=$1, email=$2 WHERE id=$3", user.Username, user.Email, user.ID)
-	if err != nil {
-		return err
-	}
-	return nil
+func (r *PostgresUserRepository) Save(user *users.User) error {
+	query := "INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4)"
+	_, err := r.DB.Exec(query, user.ID, user.Name, user.Email, user.Password)
+	return err
 }
 
 func (r *PostgresUserRepository) Delete(id int) error {
-	_, err := r.DB.Exec("DELETE FROM users WHERE id=$1", id)
-	if err != nil {
-		return err
-	}
-	return nil
+	query := "DELETE FROM users WHERE id=$1"
+	_, err := r.DB.Exec(query, id)
+	return err
+}
+
+func (r *PostgresUserRepository) Update(user *users.User) error {
+	query := "UPDATE users SET name=$1, email=$2, password=$3 WHERE id=$4"
+	_, err := r.DB.Exec(query, user.Name, user.Email, user.Password, user.ID)
+	return err
 }
