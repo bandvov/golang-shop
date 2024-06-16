@@ -44,14 +44,17 @@ func main() {
 	// Initialize repositories
 	userRepo := &infrastructure.PostgresUserRepository{DB: db}
 	productRepo := &infrastructure.PostgresProductRepository{DB: db}
+	cartRepo := &infrastructure.PostgresCartRepository{DB: db}
 
 	// Initialize services
 	userService := &application.UserService{Repo: userRepo}
 	productService := &application.ProductService{Repo: productRepo}
+	cartService := &application.CartService{Repo: cartRepo}
 
 	// Initialize handlers
 	userHandler := &interfaces.UserHandler{UserService: userService}
 	productHandler := &interfaces.ProductHandler{ProductService: productService}
+	cartHandler := &interfaces.CartHandler{CartService: cartService}
 
 	// Create a new ServeMux for the entire application
 	mux := http.NewServeMux()
@@ -64,6 +67,11 @@ func main() {
 	mux.Handle("PUT /products", interfaces.LoggerMiddleware(productHandler.UpdateProduct))
 	mux.Handle("GET /products/{id}", interfaces.LoggerMiddleware(productHandler.GetProduct))
 	mux.Handle("DELETE /products/{id}", interfaces.LoggerMiddleware(productHandler.DeleteProduct))
+
+	mux.Handle("GET /products", interfaces.LoggerMiddleware(cartHandler.GetCarts))
+	mux.Handle("PUT /products", interfaces.LoggerMiddleware(cartHandler.UpdateCart))
+	mux.Handle("GET /products/{id}", interfaces.LoggerMiddleware(cartHandler.GetCart))
+	mux.Handle("DELETE /products/{id}", interfaces.LoggerMiddleware(cartHandler.RemoveFromCart))
 
 	log.Printf("Starting server on %v\n", PORT)
 	http.ListenAndServe(fmt.Sprintf(":%v", PORT), mux)
