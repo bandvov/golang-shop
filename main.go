@@ -41,6 +41,7 @@ func main() {
 		PORT = "8080"
 	}
 
+	// seeds.Seed(db)
 	// Initialize repositories
 	userRepo := &infrastructure.PostgresUserRepository{DB: db}
 	productRepo := &infrastructure.PostgresProductRepository{DB: db}
