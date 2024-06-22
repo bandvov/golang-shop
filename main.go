@@ -26,7 +26,7 @@ func main() {
 	dbPort := os.Getenv("POSTGRES_DATABASE_PORT")
 	dbUserPassword := os.Getenv("POSTGRES_DATABASE_USER_PASSWORD")
 
-	connStr := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v  sslmode=verify-full sslrootcert=%v", dbHost, dbPort, dbUser, dbUserPassword, dbName, "")
+	connStr := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v  sslmode=disable sslrootcert=%v", dbHost, dbPort, dbUser, dbUserPassword, dbName, "")
 
 	// Connect to PostgreSQL
 	db, err := sql.Open("postgres", connStr)
@@ -59,19 +59,22 @@ func main() {
 	// Create a new ServeMux for the entire application
 	mux := http.NewServeMux()
 	mux.Handle("GET /users", interfaces.LoggerMiddleware(userHandler.GetUsers))
+	mux.Handle("POST /users", interfaces.LoggerMiddleware(userHandler.CreateUser))
 	mux.Handle("PUT /users", interfaces.LoggerMiddleware(userHandler.UpdateUser))
 	mux.Handle("GET /users/{id}", interfaces.LoggerMiddleware(userHandler.GetUserByID))
 	mux.Handle("DELETE /users/{id}", interfaces.LoggerMiddleware(userHandler.DeleteUser))
 
 	mux.Handle("GET /products", interfaces.LoggerMiddleware(productHandler.GetProducts))
+	mux.Handle("POST /products", interfaces.LoggerMiddleware(productHandler.CreateProduct))
 	mux.Handle("PUT /products", interfaces.LoggerMiddleware(productHandler.UpdateProduct))
 	mux.Handle("GET /products/{id}", interfaces.LoggerMiddleware(productHandler.GetProduct))
 	mux.Handle("DELETE /products/{id}", interfaces.LoggerMiddleware(productHandler.DeleteProduct))
 
-	mux.Handle("GET /products", interfaces.LoggerMiddleware(cartHandler.GetCarts))
-	mux.Handle("PUT /products", interfaces.LoggerMiddleware(cartHandler.UpdateCart))
-	mux.Handle("GET /products/{id}", interfaces.LoggerMiddleware(cartHandler.GetCart))
-	mux.Handle("DELETE /products/{id}", interfaces.LoggerMiddleware(cartHandler.RemoveFromCart))
+	mux.Handle("GET /carts", interfaces.LoggerMiddleware(cartHandler.GetCarts))
+	mux.Handle("POST /carts", interfaces.LoggerMiddleware(cartHandler.AddToCart))
+	mux.Handle("PUT /carts", interfaces.LoggerMiddleware(cartHandler.UpdateCart))
+	mux.Handle("GET /carts/{id}", interfaces.LoggerMiddleware(cartHandler.GetCart))
+	mux.Handle("DELETE /carts/{id}", interfaces.LoggerMiddleware(cartHandler.RemoveFromCart))
 
 	log.Printf("Starting server on %v\n", PORT)
 	http.ListenAndServe(fmt.Sprintf(":%v", PORT), mux)
