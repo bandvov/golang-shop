@@ -1,30 +1,30 @@
--- Step 1: Create a new ENUM type for the status
-CREATE TYPE user_status AS ENUM ('active', 'inactive', 'banned');
-
--- Create the table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    phone_number VARCHAR(15) NOT NULL,
-    status user_status  DEFAULT 'active',
-    password VARCHAR(255) NOT NULL,    
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    first_name VARCHAR(100) NOT NULL CHECK (LENGTH(first_name) >= 2),
+    last_name VARCHAR(100) NOT NULL CHECK (LENGTH(last_name) >= 2),
+    email VARCHAR(255) NOT NULL UNIQUE CHECK (POSITION('@' IN email) > 1),
+    password VARCHAR(255) NOT NULL CHECK (LENGTH(password) >= 8),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    role VARCHAR(5) NOT NULL CHECK (role IN ('admin', 'user')),
+    status VARCHAR(8) NOT NULL CHECK (status IN ('active', 'inactive'))
 );
 
--- Create the function that updates the `updated_at` column
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-   NEW.updated_at = NOW();
-   RETURN NEW;
+    NEW.updated_at = NOW();
+    RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
--- Create the trigger that calls the function on update
-CREATE TRIGGER update_users_updated_at
-BEFORE UPDATE ON users
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_user_updated_at') THEN
+        CREATE TRIGGER update_user_updated_at
+        BEFORE UPDATE ON users
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END;
+$$;
