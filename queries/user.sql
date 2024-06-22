@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL CHECK (LENGTH(password) >= 8),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    role VARCHAR(5) NOT NULL CHECK (role IN ('admin', 'user')),
-    status VARCHAR(8) NOT NULL CHECK (status IN ('active', 'inactive'))
+    role VARCHAR(5) NOT NULL CHECK (role IN ('admin', 'user')) DEFAULT 'user',
+    status VARCHAR(8) CHECK (status IN ('active', 'inactive')) DEFAULT 'inactive'
 );
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
