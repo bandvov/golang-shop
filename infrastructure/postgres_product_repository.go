@@ -16,7 +16,7 @@ func NewPostgresProductRepository(db *sql.DB) *PostgresProductRepository {
 }
 func (r *PostgresProductRepository) GetProducts() ([]*products.Product, error) {
 	var p []*products.Product
-	query := "SELECT * FROM products"
+	query := "SELECT id, name, description FROM products"
 
 	rows, err := r.DB.Query(query)
 	if err != nil {
@@ -26,11 +26,11 @@ func (r *PostgresProductRepository) GetProducts() ([]*products.Product, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var product *products.Product
-		if err := rows.Scan(&product); err != nil {
+		var product products.Product
+		if err := rows.Scan(&product.ID, &product.Name, &product.Description); err != nil {
 			return nil, err
 		}
-		p = append(p, product)
+		p = append(p, &product)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -53,8 +53,8 @@ func (r *PostgresProductRepository) GetByID(id int) (*products.Product, error) {
 }
 
 func (r *PostgresProductRepository) Save(product *products.Product) error {
-	query := "INSERT INTO products (id, name, description, price) VALUES ($1, $2, $3, $4)"
-	_, err := r.DB.Exec(query, product.ID, product.Name, product.Description, product.Price)
+	query := "INSERT INTO products (name, description, price, sku, stock_quantity,category,brand ) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	_, err := r.DB.Exec(query, product.Name, product.Description, product.Price, product.SKU, product.StockQuantity, product.Category, product.Brand)
 	return err
 }
 

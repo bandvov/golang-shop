@@ -51,7 +51,7 @@ func main() {
 	userService := &application.UserService{Repo: userRepo}
 	productService := &application.ProductService{Repo: productRepo}
 	cartService := &application.CartService{Repo: cartRepo}
-
+	// seeds.SeedProducts(db)
 	// Initialize handlers
 	userHandler := &interfaces.UserHandler{UserService: userService}
 	productHandler := &interfaces.ProductHandler{ProductService: productService}

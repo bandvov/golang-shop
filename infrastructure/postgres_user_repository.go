@@ -2,7 +2,6 @@ package infrastructure
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/bandvov/golang-shop/domain/users"
 	_ "github.com/lib/pq"
