@@ -28,6 +28,6 @@ func Seed(db *sql.DB) {
 		}
 	}
 
-	fmt.Println("Database setup and seeding completed.")
+	fmt.Println("Users seeding completed.")
 
 }
