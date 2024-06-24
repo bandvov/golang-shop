@@ -1,9 +1,12 @@
 package interfaces
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/bandvov/golang-shop/application"
 	"github.com/bandvov/golang-shop/domain/products"
@@ -18,7 +21,11 @@ func NewProductHandler(service *application.ProductService) *ProductHandler {
 }
 
 func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := h.ProductService.GetProducts()
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	products, err := h.ProductService.GetProducts(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -32,7 +39,11 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
 		return
 	}
-	product, err := h.ProductService.GetProductByID(id)
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	product, err := h.ProductService.GetProductByID(ctx, id)
 	if err != nil {
 		if err == products.ErrProductNotFound {
 			http.Error(w, "Product not found", http.StatusNotFound)
@@ -52,7 +63,11 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.ProductService.CreateProduct(&product); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.ProductService.CreateProduct(ctx, &product); err != nil {
+		fmt.Println(err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -67,7 +82,10 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.ProductService.DeleteProduct(id); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.ProductService.DeleteProduct(ctx, id); err != nil {
 		if err == products.ErrProductNotFound {
 			http.Error(w, "Product not found", http.StatusNotFound)
 			return
@@ -86,7 +104,10 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.ProductService.UpdateProduct(&product); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.ProductService.UpdateProduct(ctx, &product); err != nil {
 		if err == products.ErrProductNotFound {
 			http.Error(w, "Product not found", http.StatusNotFound)
 			return

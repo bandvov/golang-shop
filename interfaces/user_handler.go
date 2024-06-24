@@ -1,13 +1,15 @@
 package interfaces
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/bandvov/golang-shop/application"
 	"github.com/bandvov/golang-shop/domain/users"
-	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator"
 )
 
 type UserHandler struct {
@@ -19,7 +21,10 @@ func NewUserHandler(service *application.UserService) *UserHandler {
 }
 
 func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := h.UserService.GetUsers()
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	users, err := h.UserService.GetUsers(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,11 +39,19 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.UserService.GetUserByID(id)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	user, err := h.UserService.GetUserByID(ctx, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		if err == users.ErrUserNotFound {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
+
 	json.NewEncoder(w).Encode(user)
 }
 
@@ -57,7 +70,10 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.UserService.CreateUser(&user); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.UserService.CreateUser(ctx, &user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -67,15 +83,19 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var user users.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Failed to decode request body", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err := h.UserService.UpdateUser(&user); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.UserService.UpdateUser(ctx, &user); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -85,9 +105,13 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.UserService.DeleteUser(id); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.UserService.DeleteUser(ctx, id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	w.WriteHeader(http.StatusNoContent)
 }

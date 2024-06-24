@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -13,8 +14,8 @@ type User struct {
 	Password  string    `json:"password,omitempty" validate:"required,min=8"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	Role      string    `json:"role,omitempty" validate:"required,oneof=admin user"`
-	Status    string    `json:"status,omitempty" validate:"required,oneof=active inactive"`
+	Role      string    `json:"role,omitempty" validate:"oneof=admin user"`
+	Status    string    `json:"status,omitempty" validate:"oneof=active inactive"`
 }
 
 var (
@@ -22,9 +23,10 @@ var (
 )
 
 type UserRepository interface {
-	GetUsers() ([]*User, error)
-	GetByID(id int) (*User, error)
-	Save(user *User) error
-	Delete(id int) error
-	Update(user *User) error
+	GetUsers(ctx context.Context) ([]*User, error)
+	GetByID(ctx context.Context, id int) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	Save(ctx context.Context, user *User) error
+	Delete(ctx context.Context, id int) error
+	Update(ctx context.Context, user *User) error
 }

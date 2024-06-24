@@ -1,9 +1,11 @@
 package interfaces
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/bandvov/golang-shop/application"
 	"github.com/bandvov/golang-shop/domain/carts"
@@ -18,7 +20,10 @@ func NewCartHandler(service *application.CartService) *CartHandler {
 }
 
 func (h *CartHandler) GetCarts(w http.ResponseWriter, r *http.Request) {
-	carts, err := h.CartService.GetCarts()
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	carts, err := h.CartService.GetCarts(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -32,7 +37,10 @@ func (h *CartHandler) GetCart(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid cart ID", http.StatusBadRequest)
 		return
 	}
-	cart, err := h.CartService.GetCartByID(id)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	cart, err := h.CartService.GetCartByID(ctx, id)
 	if err != nil {
 		if err == carts.ErrCartNotFound {
 			http.Error(w, "cart not found", http.StatusNotFound)
@@ -52,7 +60,10 @@ func (h *CartHandler) AddToCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.CartService.AddToCart(&cart); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.CartService.AddToCart(ctx, &cart); err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -67,7 +78,10 @@ func (h *CartHandler) RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.CartService.RemoveFromCart(id); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.CartService.RemoveFromCart(ctx, id); err != nil {
 		if err == carts.ErrCartNotFound {
 			http.Error(w, "cart not found", http.StatusNotFound)
 			return
@@ -86,7 +100,10 @@ func (h *CartHandler) UpdateCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.CartService.UpdateCart(&cart); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := h.CartService.UpdateCart(ctx, &cart); err != nil {
 		if err == carts.ErrCartNotFound {
 			http.Error(w, "cart not found", http.StatusNotFound)
 			return

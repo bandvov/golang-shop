@@ -1,16 +1,17 @@
 package seeds
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 
 	"github.com/bandvov/golang-shop/application"
 	"github.com/bandvov/golang-shop/domain/products"
 	"github.com/bandvov/golang-shop/infrastructure"
+	"github.com/jackc/pgx/v4"
 )
 
-func SeedProducts(db *sql.DB) {
-	productRepo := infrastructure.PostgresProductRepository{DB: db}
+func SeedProducts(conn *pgx.Conn) {
+	productRepo := infrastructure.PostgresProductRepository{Conn: conn}
 	productService := application.ProductService{Repo: &productRepo}
 
 	// Sample products to seed
@@ -22,7 +23,7 @@ func SeedProducts(db *sql.DB) {
 
 	// Insert each product into the database
 	for _, product := range products {
-		err := productService.CreateProduct(product)
+		err := productService.CreateProduct(context.Background(), product)
 		if err != nil {
 			panic(err)
 		}

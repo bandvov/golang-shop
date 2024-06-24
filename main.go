@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"github.com/bandvov/golang-shop/application"
 	"github.com/bandvov/golang-shop/infrastructure"
 	"github.com/bandvov/golang-shop/interfaces"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v4"
 )
 
 func main() {
@@ -26,14 +26,14 @@ func main() {
 	dbPort := os.Getenv("POSTGRES_DATABASE_PORT")
 	dbUserPassword := os.Getenv("POSTGRES_DATABASE_USER_PASSWORD")
 
-	connStr := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v  sslmode=disable sslrootcert=%v", dbHost, dbPort, dbUser, dbUserPassword, dbName, "")
+	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v", dbUser, dbUserPassword,dbHost, dbPort, dbName)
 
 	// Connect to PostgreSQL
-	db, err := sql.Open("postgres", connStr)
+	conn, err := pgx.Connect(context.Background(), connStr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
-	defer db.Close()
+	defer conn.Close(context.Background())
 
 	PORT := os.Getenv("PORT")
 
@@ -43,9 +43,9 @@ func main() {
 
 	// seeds.Seed(db)
 	// Initialize repositories
-	userRepo := &infrastructure.PostgresUserRepository{DB: db}
-	productRepo := &infrastructure.PostgresProductRepository{DB: db}
-	cartRepo := &infrastructure.PostgresCartRepository{DB: db}
+	userRepo := &infrastructure.PostgresUserRepository{Conn: conn}
+	productRepo := &infrastructure.PostgresProductRepository{Conn: conn}
+	cartRepo := &infrastructure.PostgresCartRepository{Conn: conn}
 
 	// Initialize services
 	userService := &application.UserService{Repo: userRepo}

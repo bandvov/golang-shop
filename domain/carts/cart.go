@@ -1,6 +1,7 @@
 package carts
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -29,9 +30,9 @@ type Cart struct {
 }
 
 type CartRepository interface {
-	GetCarts()([]*Cart,error) 
-	Save(cart *Cart) error
-	FindByID(id int) (*Cart, error)
-	Delete(id int) error
-	Update(cart *Cart) error
+	GetCarts(ctx context.Context) ([]*Cart, error)
+	Save(ctx context.Context, cart *Cart) error
+	FindByID(ctx context.Context, id int) (*Cart, error)
+	Delete(ctx context.Context, id int) error
+	Update(ctx context.Context, cart *Cart) error
 }
