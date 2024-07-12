@@ -26,7 +26,7 @@ func main() {
 	dbPort := os.Getenv("POSTGRES_DATABASE_PORT")
 	dbUserPassword := os.Getenv("POSTGRES_DATABASE_USER_PASSWORD")
 
-	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v", dbUser, dbUserPassword,dbHost, dbPort, dbName)
+	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v", dbUser, dbUserPassword, dbHost, dbPort, dbName)
 
 	// Connect to PostgreSQL
 	conn, err := pgx.Connect(context.Background(), connStr)
@@ -43,19 +43,20 @@ func main() {
 
 	// seeds.Seed(db)
 	// Initialize repositories
-	userRepo := &infrastructure.PostgresUserRepository{Conn: conn}
-	productRepo := &infrastructure.PostgresProductRepository{Conn: conn}
-	cartRepo := &infrastructure.PostgresCartRepository{Conn: conn}
+	userRepo := infrastructure.NewPostgresUserRepository(conn)
+	productRepo := infrastructure.NewPostgresProductRepository(conn)
+	cartRepo := infrastructure.NewPostgresCartRepository(conn)
 
 	// Initialize services
-	userService := &application.UserService{Repo: userRepo}
-	productService := &application.ProductService{Repo: productRepo}
-	cartService := &application.CartService{Repo: cartRepo}
+	userService := application.NewUserService(userRepo)
+	productService := application.NewProductService(productRepo)
+	cartService := application.NewCartService(cartRepo)
+
 	// seeds.SeedProducts(db)
 	// Initialize handlers
-	userHandler := &interfaces.UserHandler{UserService: userService}
-	productHandler := &interfaces.ProductHandler{ProductService: productService}
-	cartHandler := &interfaces.CartHandler{CartService: cartService}
+	userHandler := interfaces.NewUserHandler(userService)
+	productHandler := interfaces.NewProductHandler(productService)
+	cartHandler := interfaces.NewCartHandler(cartService)
 
 	// Create a new ServeMux for the entire application
 	mux := http.NewServeMux()
