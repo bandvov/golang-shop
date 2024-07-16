@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/bandvov/golang-shop/domain/users"
@@ -61,6 +62,7 @@ func (r *PostgresUserRepository) GetByID(ctx context.Context, id int) (*users.Us
 		}
 		return nil, err
 	}
+	fmt.Println("user", user)
 	return &user, nil
 }
 
