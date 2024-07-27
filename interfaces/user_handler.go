@@ -3,7 +3,6 @@ package interfaces
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -34,9 +33,7 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%+v", r)
 	id, err := strconv.Atoi(r.PathValue("id"))
-	fmt.Println("err", err)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return

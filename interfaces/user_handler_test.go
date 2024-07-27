@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/bandvov/golang-shop/application"
 	"github.com/bandvov/golang-shop/domain/users"
@@ -104,72 +104,119 @@ func TestUserHandler_GetUsers(t *testing.T) {
 }
 
 func TestUserHandler_GetUserByID(t *testing.T) {
-	u := &users.User{ID: 1, FirstName: "John", LastName: "Doe", Status: "active", Role: "admin", Email: "john.doe@example.com", CreatedAt: time.Now()}
-	fmt.Println(fmt.Sprintf("/users/%d", u.ID))
+	u := &users.User{ID: 1, FirstName: "John Doe"}
+
 	type args struct {
-		w http.ResponseWriter
-		r *http.Request
+		w      http.ResponseWriter
+		r      *http.Request
+		userId string
 	}
+
 	tests := []struct {
-		name string
-		h    *UserHandler
-		args args
-		want interface{}
+		name       string
+		h          *UserHandler
+		args       args
+		wantStatus int
+		want       interface{}
 	}{
 		{
-			name: "get user",
+			name: "Get user by ID successfully",
 			h: NewUserHandler(application.NewUserService(&users.MockUserRepository{
 				GetByIDFunc: func(ctx context.Context, id int) (*users.User, error) {
 					return u, nil
 				},
 			})),
 			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest(http.MethodGet, "/users/1", nil),
+				w:      httptest.NewRecorder(),
+				r:      httptest.NewRequest("GET", "/users/1", nil),
+				userId: "1",
 			},
-			want: u, // Expecting *users.User
+			wantStatus: http.StatusOK,
+			want:       u,
 		},
 		{
-			name: "Get user error",
+			name: "Invalid user ID",
 			h: NewUserHandler(application.NewUserService(&users.MockUserRepository{
-				GetUsersFunc: func(ctx context.Context) ([]*users.User, error) {
-					return nil, pgx.ErrNoRows
+				GetByIDFunc: func(ctx context.Context, id int) (*users.User, error) {
+					return nil, nil
 				},
 			})),
 			args: args{
-				w: httptest.NewRecorder(),
-				r: httptest.NewRequest("GET", "/users/1", nil),
+				w:      httptest.NewRecorder(),
+				r:      httptest.NewRequest("GET", "/users/abc", nil),
+				userId: "abc",
 			},
-			want: pgx.ErrNoRows.Error(), // Expecting error message
+			wantStatus: http.StatusBadRequest,
+			want:       "Invalid user ID",
+		},
+		{
+			name: "User not found",
+			h: NewUserHandler(application.NewUserService(&users.MockUserRepository{
+				GetByIDFunc: func(ctx context.Context, id int) (*users.User, error) {
+					return nil, users.ErrUserNotFound
+				},
+			})),
+			args: args{
+				w:      httptest.NewRecorder(),
+				r:      httptest.NewRequest("GET", "/users/1", nil),
+				userId: "1",
+			},
+			wantStatus: http.StatusNotFound,
+			want:       "user not found",
+		},
+		{
+			name: "Internal server error",
+			h: NewUserHandler(application.NewUserService(&users.MockUserRepository{
+				GetByIDFunc: func(ctx context.Context, id int) (*users.User, error) {
+					return nil, errors.New("internal error")
+				},
+			})),
+			args: args{
+				w:      httptest.NewRecorder(),
+				r:      httptest.NewRequest("GET", "/users/3", nil),
+				userId: "3",
+			},
+			wantStatus: http.StatusInternalServerError,
+			want:       "internal error",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			fmt.Println(tt.args.r)
+			tt.args.r.SetPathValue("id", tt.args.userId)
 			tt.h.GetUserByID(tt.args.w, tt.args.r)
 
 			resp := tt.args.w.(*httptest.ResponseRecorder)
 
+			// Check status code
+			if tt.wantStatus != resp.Code {
+				t.Errorf("Status is not correct. Wanted: %+v, got: %+v", tt.wantStatus, resp.Code)
+			}
+
+			// Read response body
+			body := resp.Body
+
 			// Compare response body
 			switch want := tt.want.(type) {
 			case *users.User:
-				fmt.Println(resp.Body.Bytes())
-				// Marshal expected []*users.User to JSON
+				// Marshal expected *domain.User to JSON
 				wantJSON, err := json.Marshal(want)
 				if err != nil {
 					t.Fatalf("Failed to marshal expected data: %v", err)
 				}
-				fmt.Println(resp.Body.Bytes())
-				if bytes.Equal(resp.Body.Bytes(), wantJSON) {
-					t.Errorf("Body is not correct. Wanted: %v. Got: %v", wantJSON, resp.Body.Bytes())
+
+				if body.String() == string(wantJSON) {
+					t.Errorf("Body is not correct. Wanted: %v. Got: %v", string(wantJSON), body.String())
 				}
 			case string:
-				if strings.TrimSuffix(resp.Body.String(), "\n") != want {
-					t.Errorf("Body is not correct. Wanted: %s. Got: %s", want, resp.Body.String())
+				if strings.TrimSuffix(body.String(), "\n") != want {
+					t.Errorf("Body is not correct. Wanted: %s. Got: %s", want, body.String())
 				}
 			default:
 				t.Errorf("Unexpected type for tt.want: %T", tt.want)
 			}
-
 		})
 	}
 }
